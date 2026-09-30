@@ -1,0 +1,33 @@
+# systemd unit for running the API server without Docker.
+# Install:
+#   sudo useradd --system --home /opt/apiserver apiserver
+#   sudo cp -r . /opt/apiserver && cd /opt/apiserver
+#   sudo python3.11 -m venv .venv && sudo .venv/bin/pip install -r requirements.txt
+#   sudo cp .env.example /etc/apiserver.env   # then edit, chmod 600
+#   sudo cp deploy/apiserver.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now apiserver
+[Unit]
+Description=E-Commerce demo API server (FastAPI + Db2)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=apiserver
+Group=apiserver
+WorkingDirectory=/opt/apiserver
+EnvironmentFile=/etc/apiserver.env
+ExecStart=/opt/apiserver/.venv/bin/python -m app.main
+Restart=on-failure
+RestartSec=3
+# Logs are JSON on stdout -> journald (journalctl -u apiserver -o cat)
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/apiserver
+
+[Install]
+WantedBy=multi-user.target
