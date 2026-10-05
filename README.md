@@ -109,6 +109,10 @@ export $(grep -v '^#' .env | xargs)
 python -m app.main
 ```
 
+If `import ibm_db` fails with `libcrypt.so.1: cannot open shared object file`, the host has no
+legacy libcrypt, which the bundled Db2 CLI driver needs. Install it:
+Fedora/RHEL `sudo dnf install libxcrypt-compat`; Debian/Ubuntu `sudo apt-get install libcrypt1`.
+
 ### Docker
 
 The `ibm_db` wheel bundles the Db2 CLI driver, and the image build fails if `import ibm_db` fails.
