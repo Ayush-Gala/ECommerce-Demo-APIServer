@@ -2,8 +2,8 @@
 # Install with:  sudo deploy/install.sh   (see that script for the manual steps)
 #
 #   systemctl status|start|stop|restart apiserver
-#   journalctl -u apiserver -f            # follow logs
-#   journalctl -u apiserver -o cat        # raw JSON lines only
+#   tail -f /var/log/apiserver/apiserver.log   # application logs (JSON lines)
+#   journalctl -u apiserver -f                 # startup errors / crash tracebacks
 [Unit]
 Description=E-Commerce demo API server (FastAPI + Db2)
 After=network-online.target
@@ -18,6 +18,8 @@ Group=ubuntu
 WorkingDirectory=/opt/apiserver
 EnvironmentFile=/opt/apiserver/.env
 Environment=PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+# Application logs go to a file; LOG_FILE in the EnvironmentFile overrides this
+Environment=LOG_FILE=/var/log/apiserver/apiserver.log
 ExecStart=/opt/apiserver/.venv/bin/python -m app.main
 Restart=on-failure
 RestartSec=3
@@ -25,7 +27,10 @@ RestartSec=3
 KillSignal=SIGTERM
 TimeoutStopSec=20
 
-# Logs are JSON on stdout -> journald
+# systemd creates /var/log/apiserver owned by User= and makes it writable despite ProtectSystem
+LogsDirectory=apiserver
+LogsDirectoryMode=0750
+# Anything printed before logging is set up (or an uncaught crash) still lands in journald
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=apiserver

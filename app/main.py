@@ -150,7 +150,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
 def create_app(settings: Settings | None = None, pool: Db2Pool | None = None) -> FastAPI:
     settings = settings or load_settings()
-    setup_logging(settings.log_level)
+    setup_logging(settings.log_level, settings.log_file)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):

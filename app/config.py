@@ -14,6 +14,7 @@ class Settings:
     pool_acquire_timeout: float
     app_port: int
     log_level: str
+    log_file: str | None = None
 
     @property
     def dsn(self) -> str:
@@ -36,4 +37,5 @@ def load_settings() -> Settings:
         pool_acquire_timeout=float(env.get("POOL_ACQUIRE_TIMEOUT", "5")),
         app_port=int(env.get("APP_PORT", "8000")),
         log_level=env.get("LOG_LEVEL", "INFO").upper(),
+        log_file=env.get("LOG_FILE") or None,
     )

@@ -44,6 +44,7 @@ All settings come from environment variables (see `.env.example`).
 | `POOL_ACQUIRE_TIMEOUT` | `5` | seconds to wait for a connection before returning 503 |
 | `APP_PORT` | `8000` | HTTP listen port |
 | `LOG_LEVEL` | `INFO` | `DEBUG` also logs each physical connection open/close |
+| `LOG_FILE` | *(empty)* | write logs to this file instead of stdout (the systemd unit sets `/var/log/apiserver/apiserver.log`) |
 
 The pool sets the Db2 client application name to `apiserver` on every connection, so its
 connections show up as `CLIENT_APPLNAME = 'apiserver'` in `MON_GET_CONNECTION`, `db2top`, and
@@ -126,8 +127,17 @@ docker run --rm --env-file .env apiserver python sql/seed.py
 
 ### systemd
 
-See the comments at the top of `deploy/apiserver.service`. Environment goes in `/etc/apiserver.env`,
-and logs go to journald (`journalctl -u apiserver -o cat`).
+```bash
+sudo deploy/install.sh          # installs to /opt/apiserver, enables + starts the service
+sudoedit /etc/apiserver.env     # created from .env.example on first install
+sudo systemctl restart apiserver
+tail -f /var/log/apiserver/apiserver.log   # follow application logs
+journalctl -u apiserver -f                 # startup errors / crash tracebacks
+```
+
+Re-run `sudo deploy/install.sh` after pulling changes to sync code and restart.
+
+For log rotation, copy `deploy/apiserver.logrotate` to `/etc/logrotate.d/apiserver` (daily, 14 days kept).
 
 ## API
 
@@ -172,7 +182,7 @@ returned to the pool.
 
 ## Logs
 
-Logs are JSON, one object per line on stdout. Every line has `timestamp`, `level`, `logger`,
+Logs are JSON, one object per line, on stdout (or in `LOG_FILE` when set). Every line has `timestamp`, `level`, `logger`,
 `message` and `request_id` (`null` outside a request). The request id comes from the incoming
 `X-Request-ID` header when it is present and well-formed (up to 128 characters from
 `[A-Za-z0-9._:-]`); otherwise one is generated. It is echoed back in the `X-Request-ID` response

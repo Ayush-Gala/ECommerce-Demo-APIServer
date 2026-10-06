@@ -1,4 +1,5 @@
 import logging
+import logging.handlers
 import sys
 from contextvars import ContextVar
 from dataclasses import dataclass
@@ -54,8 +55,15 @@ class RequestIdFilter(logging.Filter):
         return True
 
 
-def setup_logging(level: str = "INFO") -> None:
-    handler = logging.StreamHandler(sys.stdout)
+def setup_logging(level: str = "INFO", log_file: str | None = None) -> None:
+    """Log JSON lines to stdout, or to log_file when given.
+
+    WatchedFileHandler reopens the file if it is moved or truncated, so external logrotate works.
+    """
+    if log_file:
+        handler = logging.handlers.WatchedFileHandler(log_file, encoding="utf-8")
+    else:
+        handler = logging.StreamHandler(sys.stdout)
     handler.addFilter(RequestIdFilter())
     handler.setFormatter(
         JsonFormatter(
