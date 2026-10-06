@@ -13,10 +13,10 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-User=apiserver
-Group=apiserver
+User=ubuntu
+Group=ubuntu
 WorkingDirectory=/opt/apiserver
-EnvironmentFile=/etc/apiserver.env
+EnvironmentFile=/opt/apiserver/.env
 Environment=PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 ExecStart=/opt/apiserver/.venv/bin/python -m app.main
 Restart=on-failure
