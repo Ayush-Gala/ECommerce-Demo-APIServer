@@ -9,7 +9,6 @@ nginx** (the same path a browser takes). Each simulated user:
 | Task | Weight | Request |
 |---|---|---|
 | browse catalog | 10 | `GET /api/products?limit=12&offset=…` (60% filtered by category) |
-| view product | 6 | `GET /api/products/{id}` |
 | order history | 2 | `GET /api/orders?customer_id=…&limit=20` |
 | checkout | 1 | `POST /api/orders` with 1–3 products, quantity 1–2 |
 
@@ -20,7 +19,7 @@ Locust failure.
 Every request carries an `X-Request-ID` of the form `lg-<32 hex>`, so load-generator traffic
 can be told apart from real clicks, and one id links the nginx log and the apiserver log.
 
-Roughly 30 users ≈ 13 requests/s and about 0.7 orders/s.
+Roughly 30 users ≈ 13 requests/s and about 1 order/s.
 
 ## Install
 
@@ -98,7 +97,7 @@ journalctl -u loadgen -f
 ## Keep stock from running out
 
 Checkouts only ever decrease INVENTORY. At ~30 users the seeded stock (~50,000 units) lasts
-roughly 7 hours; after that nearly every checkout gets a 409 and no orders are written, which
+roughly 5 hours; after that nearly every checkout gets a 409 and no orders are written, which
 quietly changes the "normal" baseline. For long runs, top stock up periodically with
 `restock.py`, from a checkout of this repo on a host that has the API server's venv and DB2_*
 settings:

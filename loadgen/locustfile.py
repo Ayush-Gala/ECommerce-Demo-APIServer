@@ -1,8 +1,11 @@
 """Steady "normal shopper" traffic for the Demo Store, sent through the UI's nginx.
 
 Each simulated user picks a customer from the "log in as" list, then browses the
-catalog, opens products, checks order history and occasionally checks out, with
-1-4 s of think time between clicks. Requests mirror what the UI itself sends.
+catalog, checks order history and occasionally checks out, with 1-4 s of think
+time between clicks. Requests mirror what the UI itself sends.
+
+It deliberately never calls GET /api/products/{id}: that route has the
+connection-leak bug (see leak_locustfile.py), and normal traffic must not touch it.
 
 Run (see loadgen/README.md):
     locust -f loadgen/locustfile.py --host http://<ui-host> --headless -u 30 -r 5
@@ -66,12 +69,6 @@ class Shopper(HttpUser):
         r = self.get("/api/products", name="/api/products", params=params)
         if r.ok:
             self.product_ids = [p["product_id"] for p in r.json().get("items", [])] or self.product_ids
-
-    @task(6)
-    def view_product(self):
-        if self.product_ids:
-            pid = random.choice(self.product_ids)
-            self.get(f"/api/products/{pid}", name="/api/products/{id}")
 
     @task(2)
     def order_history(self):
