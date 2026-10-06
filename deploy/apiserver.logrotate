@@ -1,0 +1,12 @@
+# Install as /etc/logrotate.d/apiserver
+# The app uses WatchedFileHandler, so it reopens the log after rotation without a restart.
+/var/log/apiserver/*.log {
+    daily
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    su ubuntu ubuntu
+    create 0640 ubuntu ubuntu
+}
