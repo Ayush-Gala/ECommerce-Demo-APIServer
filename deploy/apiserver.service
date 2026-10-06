@@ -1,15 +1,15 @@
 # systemd unit for running the API server without Docker.
-# Install:
-#   sudo useradd --system --home /opt/apiserver apiserver
-#   sudo cp -r . /opt/apiserver && cd /opt/apiserver
-#   sudo python3.11 -m venv .venv && sudo .venv/bin/pip install -r requirements.txt
-#   sudo cp .env.example /etc/apiserver.env   # then edit, chmod 600
-#   sudo cp deploy/apiserver.service /etc/systemd/system/
-#   sudo systemctl daemon-reload && sudo systemctl enable --now apiserver
+# Install with:  sudo deploy/install.sh   (see that script for the manual steps)
+#
+#   systemctl status|start|stop|restart apiserver
+#   journalctl -u apiserver -f            # follow logs
+#   journalctl -u apiserver -o cat        # raw JSON lines only
 [Unit]
 Description=E-Commerce demo API server (FastAPI + Db2)
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -17,16 +17,29 @@ User=apiserver
 Group=apiserver
 WorkingDirectory=/opt/apiserver
 EnvironmentFile=/etc/apiserver.env
+Environment=PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 ExecStart=/opt/apiserver/.venv/bin/python -m app.main
 Restart=on-failure
 RestartSec=3
-# Logs are JSON on stdout -> journald (journalctl -u apiserver -o cat)
+# uvicorn shuts down gracefully on SIGTERM; give in-flight requests and the Db2 pool time to close
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+# Logs are JSON on stdout -> journald
 StandardOutput=journal
 StandardError=journal
+SyslogIdentifier=apiserver
+
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+# The bundled Db2 clidriver (inside the venv) may write diagnostic files
 ReadWritePaths=/opt/apiserver
 
 [Install]
